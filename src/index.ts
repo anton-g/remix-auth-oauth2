@@ -12,7 +12,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 let debug = createDebug("OAuth2Strategy");
-
 export interface OAuth2Profile {
   provider: string;
   id?: string;
@@ -58,6 +57,10 @@ export interface OAuth2StrategyVerifyParams<
   profile: Profile;
   context?: AppLoadContext;
   request: Request;
+}
+
+export interface OAuth2StrategyAuthenticateOptions extends AuthenticateOptions {
+  state?: string;
 }
 
 /**
@@ -142,7 +145,7 @@ export class OAuth2Strategy<
   async authenticate(
     request: Request,
     sessionStorage: SessionStorage,
-    options: AuthenticateOptions,
+    options: OAuth2StrategyAuthenticateOptions,
   ): Promise<User> {
     debug("Request URL", request.url);
     let url = new URL(request.url);
@@ -165,7 +168,7 @@ export class OAuth2Strategy<
     // Redirect the user to the callback URL
     if (url.pathname !== callbackURL.pathname) {
       debug("Redirecting to callback URL");
-      let state = this.generateState();
+      let state = options.state || this.generateState();
       debug("State", state);
       session.set(this.sessionStateKey, state);
       throw redirect(this.getAuthorizationURL(request, state).toString(), {
